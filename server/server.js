@@ -11,16 +11,27 @@ var io = socketio(server);
 app.use(express.static(publicpath));
 io.on('connection',(socket)=>{
     console.log('new user connected');
-    socket.emit('newmessage',{
-        from:'John',
-        text:'hello naman sup?',
-        createdAt:321
-});
-socket.on('createmsg',(message)=>{
-    console.log('createmsg',message);
+    socket.on('createmsg',(message)=>{
+        console.log('createmsg',message);
+        io.emit('newmessage',{
+            from:message.from,
+            text:message.text
+            });
+            socket.emit('newmessage',{
+from:'Admin',
+text:'Welcome to the chat app'
+            });
+            socket.broadcast.emit('newmessage',{
+from:'Admin',
+text:'new user has joined'
+            });
+        // socket.broadcast.emit('newmessage',{
+        //     from:message.from,
+        //   text:message.text,
+        //   createdAt : new Date().getHours()
+        // });
+        });
 
-    });
-  
    
   
     socket.on('disconnect',function(){
