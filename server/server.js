@@ -1,46 +1,39 @@
 const path = require('path');
 const http = require('http');
 const express = require('express');
-const socketio = require('socket.io');
+const socketIO = require('socket.io');
+
+const {generateMessage, generateLocationMessage} = require('./utils/message');
+const publicPath = path.join(__dirname, '../public');
 const port = process.env.PORT || 3000;
-var publicpath = path.join(__dirname + '/../public');
-console.log(publicpath);
 var app = express();
-var server = http.createServer(app)
-var io = socketio(server);
-app.use(express.static(publicpath));
-io.on('connection',(socket)=>{
-    console.log('new user connected');
-    socket.on('createmsg',(message)=>{
-        console.log('createmsg',message);
-        io.emit('newmessage',{
-            from:message.from,
-            text:message.text
-            });
-            socket.emit('newmessage',{
-from:'Admin',
-text:'Welcome to the chat app'
-            });
-            socket.broadcast.emit('newmessage',{
-from:'Admin',
-text:'new user has joined'
-            });
-        // socket.broadcast.emit('newmessage',{
-        //     from:message.from,
-        //   text:message.text,
-        //   createdAt : new Date().getHours()
-        // });
-        });
+var server = http.createServer(app);
+var io = socketIO(server);
 
-   
-  
-    socket.on('disconnect',function(){
-console.log('user disconnected');
-    });
+app.use(express.static(publicPath));
 
-    });
+io.on('connection', (socket) => {
+  console.log('New user connected');
 
+  socket.emit('newMessage', generateMessage('Admin', 'Welcome to the chat app'));
 
-server.listen(port,function(){
-console.log(`server is up on port ${port}`);
+  socket.broadcast.emit('newMessage', generateMessage('Admin', 'New user joined'));
+
+  socket.on('createMessage', (message, callback) => {
+    console.log('createMessage', message);
+    io.emit('newMessage', generateMessage(message.from, message.text));
+    callback();
+  });
+
+  socket.on('createLocationMessage', (coords) => {
+    io.emit('newLocationMessage', generateLocationMessage('Admin', coords.latitude, coords.longitude));
+  });
+
+  socket.on('disconnect', () => {
+    console.log('User was disconnected');
+  });
+});
+
+server.listen(port, () => {
+  console.log(`Server is up on ${port}`);
 });
