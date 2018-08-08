@@ -9,18 +9,35 @@ var scrollHeight = messages.prop('scrolltHeight');
 var newmessageheight = newmessages.innerHeight();
 var lastmessageheight = newmessages.prev().innerHeight();
 
+
 if(clientheight+scrollTop+newmessageheight+lastmessageheight>=scrollHeight)
 {
   messages.scrollTop(scrollHeight);
 }
 }
 socket.on('connect', function () {
-  console.log('Connected to server');
+  var params = jQuery.deparam(window.location.search);
+  socket.emit('join',params,function(err){
+if(err){
+  alert(err);
+window.location.href='/';
+}else{
+console.log('no error');
+}
+  });
 });
 
 socket.on('disconnect', function () {
   console.log('Disconnected from server');
 });
+socket.on('updateuserlist',function(users){
+var ul = jQuery('<ol></ol>');
+users.forEach(function(user){
+ul.append(jQuery('<li></li>').text(user));
+});
+jQuery('#users').html(ul);
+});
+
 
 socket.on('newMessage', function (message) {
   var formattedTime = moment(message.createdAt).format('h:mm a');
@@ -59,8 +76,8 @@ jQuery('#message-form').on('submit', function (e) {
   e.preventDefault();
 var messagetextbox = jQuery('[name=message]');
   socket.emit('createMessage', {
-    from: 'User',
-    text: messagetextbox.val()
+    
+  text: messagetextbox.val()
   }, function () {
 messagetextbox.val('')
   });
